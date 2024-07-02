@@ -77,15 +77,15 @@ export default function UserScreen () {
         value={comentario}
         />
       <Button title='Guardar' onPress={() => guardarUsuario(cedula, nombre, correo, comentario)} />
-    
+      <View style={styles.FlatListContainer}>
       <FlatList 
-        style={{flex: 1}}
         data={usuarios}
         renderItem={({item}: {item: Usuario}) => 
         <View>
           <Text>{item.username}</Text>
         </View>}
       />
+      </View>
     </View>
   )
 }
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 5,
     backgroundColor: '#d1d1d1',
   },
-  FlatList:{
+  FlatListContainer:{
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
