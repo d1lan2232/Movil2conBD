@@ -4,69 +4,80 @@ import { ref, set, onValue, update, remove } from "firebase/database"
 import { db } from "../config/Config";
 import Tarjeta from '../Components/Tarjeta';
 
-export default function UserScreen () {
+export default function UserScreen() {
   const [cedula, setcedula] = useState("")
   const [nombre, setnombre] = useState("")
   const [correo, setcorreo] = useState("")
   const [comentario, setcomentario] = useState("")
-
   const [usuarios, setusuarios] = useState([])
+  const [modoEdicion, setModoEdicion] = useState(false) 
 
-  //---------------Guardar informacion---------------
-  function guardarUsuario(cedula: any, nombre: string, correo: string, comentario: any) {
-    
-    set(ref(db, 'usuarios/' + cedula), {
+  // Guardar usuario o editar 
+  function guardarUsuario() {
+    if (modoEdicion) {
+      editar();
+    } else {
+      set(ref(db, 'usuarios/' + cedula), {
+        username: nombre,
+        email: correo,
+        comentario: comentario
+      });
+      Alert.alert("Mensaje", "Información guardada");
+      setcedula("");
+      setnombre("");
+      setcorreo("");
+      setcomentario("");
+    }
+  }
+
+  // Leer datos al cargar el componente
+  useEffect(() => {
+    const starCountRef = ref(db, 'usuarios/');
+    onValue(starCountRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const dataTemp: any = Object.keys(data).map((key) => ({
+          key,
+          ...data[key]
+        }));
+        setusuarios(dataTemp);
+      } else {
+        setusuarios([]);
+      }
+    });
+  }, []);
+
+  // Editar usuario
+  function editar() {
+    update(ref(db, 'usuarios/' + cedula), {
       username: nombre,
       email: correo,
       comentario: comentario
     });
-    Alert.alert("Mensaje", "Informacion guardada")
-
-    setcedula("")
-    setnombre("")
-    setcorreo("")
-    setcomentario("")
+    Alert.alert("Mensaje", "Información actualizada");
+    setModoEdicion(false); 
+    setcedula("");
+    setnombre("");
+    setcorreo("");
+    setcomentario("");
   }
-//-----------------------------------------------------
 
-  //-----------------Leer datos--------------
-  useEffect(() => {
-    const starCountRef = ref(db, 'usuarios/' );
-  onValue(starCountRef, (snapshot) => {
-  const data = snapshot.val();
-  console.log(data);
-
-  const dataTemp: any = Object.keys(data).map ( (key) => ({
-    key, ...data[key]
-  }))
-
-  console.log(dataTemp);
-  setusuarios(dataTemp)
-  
-});
-  }, [])
-//-------------------------------------------
-
-//---------------------Editar----------------
-  function editar(id: string){
-  update(ref(db, 'usuarios/' + id), {
-    username: nombre,
-    email: correo,
-    comentario: comentario
-  });
-    setcedula("")
-    setnombre("")
-    setcorreo("")
-    setcomentario("")
+  // Preparar campos para editar
+  function editarUsuario(item : any) {
+    setModoEdicion(true); // Activar modo de edición
+    setcedula(item.key);
+    setnombre(item.username);
+    setcorreo(item.email);
+    setcomentario(item.comentario);
   }
-//------------------------------------------------
-//-------------------Eliminar---------------------
-  function eliminar(id: string){
+
+  // Eliminar usuario
+  function eliminar(id : any) {
     remove(ref(db, 'usuarios/' + id));
-    Alert.alert("Mensaje", "Informacion eliminada")
+    Alert.alert("Mensaje", "Información eliminada");
   }
 
-  type Usuario ={
+  type Usuario = {
     username: string,
     key: string,
     email: string,
@@ -87,45 +98,40 @@ export default function UserScreen () {
         placeholder='Ingresar nombre:'
         onChangeText={(texto) => setnombre(texto)}
         value={nombre}
-        />
+      />
       <TextInput
         style={styles.input}
         placeholder='Ingresar correo:'
         onChangeText={(texto) => setcorreo(texto)}
         value={correo}
-        keyboardType='email-address' 
-        />
+        keyboardType='email-address'
+      />
       <TextInput
         style={styles.input}
         placeholder='Ingresar comentario: '
-        onChangeText={(texto) => setcomentario(texto)} 
+        onChangeText={(texto) => setcomentario(texto)}
         value={comentario}
-        />
-      <Button title='Guardar' onPress={() => guardarUsuario(cedula, nombre, correo, comentario)} /> 
-      <FlatList 
+      />
+      <Button title={modoEdicion ? 'Editar' : 'Guardar'} onPress={guardarUsuario} />
+      <FlatList
         data={usuarios}
-        renderItem={({item}: {item: Usuario}) => 
-        //<Tarjeta usuario = {item}/>
-        <View style={styles.container2}>
-          <Text>{item.key}</Text>
-          <Text>{item.username}</Text>
-          <Text>{item.comentario}</Text>
-          <Text>{item.email}</Text>
-          <View style={styles.botones}>
-            <View style={{paddingRight: 15}}>
-          <Button title='Editar' color={'green'} onPress={() => editar(item.key)}/>
+        renderItem={({ item }: { item: Usuario }) =>
+          <View style={styles.container2}>
+            <Tarjeta usuario={item} />
+            <View style={styles.botones}>
+              <View style={{ paddingRight: 15 }}>
+                <Button title='Editar' color={'green'} onPress={() => editarUsuario(item)} />
+              </View>
+              <Button title='Eliminar' color={'red'} onPress={() => eliminar(item.key)} />
             </View>
-          <Button title='Eliminar' color={'red'} onPress={() => eliminar(item.key)}/>
           </View>
-        </View>
         }
-        />
-        <StatusBar backgroundColor={'#0f2417'}/> 
+      />
+      <StatusBar backgroundColor={'#0f2417'} />
 
     </View>
   )
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -145,13 +151,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 5,
     backgroundColor: '#d1d1d1',
   },
-  container2:{
-    padding: 5,
-    
+  container2: {
+    padding: 5
   },
-  botones:{
+  botones: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     margin: 15
   }
-})
+});

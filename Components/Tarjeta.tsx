@@ -7,8 +7,9 @@ const Tarjeta = ( props : any ) => {
     
   return (
     <View style={styles.container}>
+      <Text>{props.usuario.key}</Text>
       <Text>{props.usuario.username}</Text>
-      <Text>{props.usuario.correo}</Text>
+      <Text>{props.usuario.email}</Text>
       <Text>{props.usuario.comentario}</Text>
     </View>
   )
@@ -25,5 +26,6 @@ const styles = StyleSheet.create({
         margin: 7,
         borderWidth: 2, 
         borderRadius: 10,
+        padding: 10
     }
 })
