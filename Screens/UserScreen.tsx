@@ -11,8 +11,6 @@ export default function UserScreen () {
 
   const [usuarios, setusuarios] = useState([])
 
-  type Usuario = String
-
   //Guardar informacion
   function guardarUsuario(cedula: any, nombre: string, correo: string, comentario: any) {
     
@@ -46,7 +44,9 @@ export default function UserScreen () {
 });
   }, [])
   
-
+  type Usuario ={
+    username: string,
+  }
 
   return (
     <View style={styles.container}>
@@ -82,10 +82,9 @@ export default function UserScreen () {
         data={usuarios}
         renderItem={({item}: {item: Usuario}) => 
         <View>
-          <Text>{item.name}</Text>
+          <Text>{item.username}</Text>
         </View>}
       />
-
     </View>
   )
 }
