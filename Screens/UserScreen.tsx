@@ -1,7 +1,8 @@
-import { Alert, Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Alert, Button, FlatList, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { ref, set, onValue } from "firebase/database"
+import { ref, set, onValue, update, remove } from "firebase/database"
 import { db } from "../config/Config";
+import Tarjeta from '../Components/Tarjeta';
 
 export default function UserScreen () {
   const [cedula, setcedula] = useState("")
@@ -11,7 +12,7 @@ export default function UserScreen () {
 
   const [usuarios, setusuarios] = useState([])
 
-  //Guardar informacion
+  //---------------Guardar informacion---------------
   function guardarUsuario(cedula: any, nombre: string, correo: string, comentario: any) {
     
     set(ref(db, 'usuarios/' + cedula), {
@@ -26,8 +27,9 @@ export default function UserScreen () {
     setcorreo("")
     setcomentario("")
   }
+//-----------------------------------------------------
 
-  //Leer datos
+  //-----------------Leer datos--------------
   useEffect(() => {
     const starCountRef = ref(db, 'usuarios/' );
   onValue(starCountRef, (snapshot) => {
@@ -43,9 +45,32 @@ export default function UserScreen () {
   
 });
   }, [])
-  
+//-------------------------------------------
+
+//---------------------Editar----------------
+  function editar(id: string){
+  update(ref(db, 'usuarios/' + id), {
+    username: nombre,
+    email: correo,
+    comentario: comentario
+  });
+    setcedula("")
+    setnombre("")
+    setcorreo("")
+    setcomentario("")
+  }
+//------------------------------------------------
+//-------------------Eliminar---------------------
+  function eliminar(id: string){
+    remove(ref(db, 'usuarios/' + id));
+    Alert.alert("Mensaje", "Informacion eliminada")
+  }
+
   type Usuario ={
     username: string,
+    key: string,
+    email: string,
+    comentario: string
   }
 
   return (
@@ -76,16 +101,27 @@ export default function UserScreen () {
         onChangeText={(texto) => setcomentario(texto)} 
         value={comentario}
         />
-      <Button title='Guardar' onPress={() => guardarUsuario(cedula, nombre, correo, comentario)} />
-      <View style={styles.FlatListContainer}>
+      <Button title='Guardar' onPress={() => guardarUsuario(cedula, nombre, correo, comentario)} /> 
       <FlatList 
         data={usuarios}
         renderItem={({item}: {item: Usuario}) => 
-        <View>
+        //<Tarjeta usuario = {item}/>
+        <View style={styles.container2}>
+          <Text>{item.key}</Text>
           <Text>{item.username}</Text>
-        </View>}
-      />
-      </View>
+          <Text>{item.comentario}</Text>
+          <Text>{item.email}</Text>
+          <View style={styles.botones}>
+            <View style={{paddingRight: 15}}>
+          <Button title='Editar' color={'green'} onPress={() => editar(item.key)}/>
+            </View>
+          <Button title='Eliminar' color={'red'} onPress={() => eliminar(item.key)}/>
+          </View>
+        </View>
+        }
+        />
+        <StatusBar backgroundColor={'#0f2417'}/> 
+
     </View>
   )
 }
@@ -109,9 +145,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 5,
     backgroundColor: '#d1d1d1',
   },
-  FlatListContainer:{
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  container2:{
+    padding: 5,
+    
+  },
+  botones:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    margin: 15
   }
 })
